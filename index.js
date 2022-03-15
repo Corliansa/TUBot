@@ -6,7 +6,7 @@ require("dotenv").config();
 const token = process.env.TELEGRAM_KEY;
 
 // Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, { polling: true, onlyFirstMatch: true });
 
 const onlineText = "Online ✅";
 const offlineText = "Offline ❌";
@@ -91,17 +91,17 @@ bot.onText(/\/debug/, (msg, match) => {
 
 bot.onText(/\/isis/, async (msg, match) => {
 	const chatId = msg.chat.id;
-	bot.sendMessage(chatId, `ISIS is ${getStatus(isis())}`);
+	bot.sendMessage(chatId, `ISIS is ${getStatus(await isis())}`);
 });
 
 bot.onText(/\/shib/, async (msg, match) => {
 	const chatId = msg.chat.id;
-	bot.sendMessage(chatId, `Shibboleth is ${getStatus(shib())}`);
+	bot.sendMessage(chatId, `Shibboleth is ${getStatus(await shib())}`);
 });
 
 bot.onText(/\/moses/, async (msg, match) => {
 	const chatId = msg.chat.id;
-	bot.sendMessage(chatId, `Moses is ${getStatus(moses())}`);
+	bot.sendMessage(chatId, `Moses is ${getStatus(await moses())}`);
 });
 
 bot.onText(/\/check (.+)/, async (msg, match) => {
@@ -112,11 +112,11 @@ bot.onText(/\/check (.+)/, async (msg, match) => {
 			timeout: 5000,
 		})
 		.then(function (response) {
-			console.log(response);
+			// console.log(response);
 			bot.sendMessage(chatId, getStatus(true));
 		})
 		.catch(function (error) {
-			console.error(error);
+			// console.error(error);
 			bot.sendMessage(chatId, `${getStatus(false)}: ${error?.message}`);
 		});
 });
@@ -126,8 +126,8 @@ bot.onText(/\/all/, async (msg, match) => {
 	bot.sendMessage(
 		chatId,
 		`Checking all services:
-	ISIS is ${getStatus(isis())}
-	Shibboleth is ${getStatus(shib())}
-	Moses is ${getStatus(moses())}`
+	ISIS is ${getStatus(await isis())}
+	Shibboleth is ${getStatus(await shib())}
+	Moses is ${getStatus(await moses())}`
 	);
 });
