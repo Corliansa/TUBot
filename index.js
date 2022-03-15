@@ -10,13 +10,20 @@ const bot = new TelegramBot(token, { polling: true, onlyFirstMatch: true });
 
 const lastChat = {};
 
-const setLastChat = (chatId, messageId) => {
-	Object.assign(lastChat, { [chatId]: messageId });
+const setLastChat = (chatId, messageId, command) => {
+	Object.assign(lastChat, { [chatId]: { ...lastChat?.[chatId] } });
+	Object.assign(lastChat[chatId], { [command]: messageId });
 };
 
-const clearLastChat = async (chatId) => {
-	lastChat[chatId] &&
-		(await bot.deleteMessage(chatId, lastChat[chatId]).catch(() => {}));
+const clearLastChat = async (chatId, command) => {
+	lastChat?.[chatId]?.[command] &&
+		(await bot
+			.deleteMessage(chatId, lastChat?.[chatId]?.[command])
+			.catch(() => {}));
+};
+
+const clearChat = async (chatId, messageId) => {
+	await bot.deleteMessage(chatId, messageId).catch(() => {});
 };
 
 const chatClearer = async (chatId, messageId = lastChat[chatId]) => {
@@ -65,20 +72,22 @@ const moses = async () => {
 
 bot.onText(/\/start/, (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
+	clearLastChat(chatId, "start");
+	clearChat(chatId, msg.message_id);
 	bot
 		.sendMessage(
 			chatId,
-			"Hello!\nI'm a bot created by Arniclas.\n\nTo start, please, type /help to see the list of commands."
+			"Hello!\nI'm a bot to check for TU Services, created by Arniclas.\n✨ Now with smart anti spam\n\nType /help to see the list of commands."
 		)
 		.then((message) => {
-			setLastChat(chatId, message.message_id);
+			setLastChat(chatId, message.message_id, "start");
 		});
 });
 
 bot.onText(/\/help/, (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
+	clearLastChat(chatId, "help");
+	clearChat(chatId, msg.message_id);
 	bot
 		.sendMessage(
 			chatId,
@@ -91,88 +100,83 @@ bot.onText(/\/help/, (msg, match) => {
 		/moses - Check if Moses is online
 		/all - Check for all services`
 		)
-		.then((message) => setLastChat(chatId, message.message_id));
+		.then((message) => setLastChat(chatId, message.message_id, "help"));
 });
 
 bot.onText(/\/ping/, (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
+	clearLastChat(chatId, "ping");
+	clearChat(chatId, msg.message_id);
 	bot
 		.sendMessage(chatId, "Pong!")
-		.then((message) => setLastChat(chatId, message.message_id));
+		.then((message) => setLastChat(chatId, message.message_id, "ping"));
 });
 
 bot.onText(/\/echo (.+)/, (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
+	clearChat(chatId, msg.message_id);
 	const resp = match[1];
-	if (msg.from.id != "1992870418") return false;
-	bot
-		.sendMessage(chatId, resp)
-		.then((message) => setLastChat(chatId, message.message_id));
+	if (msg.from.id !== "1992870418") return false;
+	bot.sendMessage(chatId, resp);
 	// bot.sendMessage(chatId, JSON.stringify(match, null, 2));
 });
 
 bot.onText(/\/debug/, (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
-	bot.sendMessage(chatId, "Debug sent to PM!");
-	bot
-		.sendMessage(
-			msg.from?.id || chatId,
-			msg.from?.id ? JSON.stringify(msg, null, 2) : "Error!"
-		)
-		.then((message) => setLastChat(chatId, message.message_id));
+	clearChat(chatId, msg.message_id);
+	if (msg.from.id !== "1992870418") return false;
+	bot.sendMessage(msg.from.id, JSON.stringify(msg, null, 2));
 });
 
 bot.onText(/\/isis/, async (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
+	clearLastChat(chatId, "isis");
+	clearChat(chatId, msg.message_id);
 	bot
 		.sendMessage(chatId, `ISIS is ${getStatus(await isis())}`)
-		.then((message) => setLastChat(chatId, message.message_id));
+		.then((message) => setLastChat(chatId, message.message_id, "isis"));
 });
 
 bot.onText(/\/shib/, async (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
+	clearLastChat(chatId, "shib");
+	clearChat(chatId, msg.message_id);
 	bot
 		.sendMessage(chatId, `Shibboleth is ${getStatus(await shib())}`)
-		.then((message) => setLastChat(chatId, message.message_id));
+		.then((message) => setLastChat(chatId, message.message_id, "shib"));
 });
 
 bot.onText(/\/moses/, async (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
+	clearLastChat(chatId, "moses");
+	clearChat(chatId, msg.message_id);
 	bot
 		.sendMessage(chatId, `Moses is ${getStatus(await moses())}`)
-		.then((message) => setLastChat(chatId, message.message_id));
+		.then((message) => setLastChat(chatId, message.message_id, "moses"));
 });
 
 bot.onText(/\/check (.+)/, async (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
-	const resp = match[1];
+	clearChat(chatId, msg.message_id);
+	if (msg.from.id !== "1992870418") return false;
+	const resp = match[1].startsWith("http") ? match[1] : `https://${match[1]}`;
 	axios(resp, {
 		timeout: 5000,
 	})
 		.then(function (response) {
 			// console.log(response);
-			bot
-				.sendMessage(chatId, getStatus(true))
-				.then((message) => setLastChat(chatId, message.message_id));
+			bot.sendMessage(chatId, getStatus(true));
 		})
 		.catch(function (error) {
 			// console.error(error);
-			bot
-				.sendMessage(chatId, `${getStatus(false)}: ${error?.message}`)
-				.then((message) => setLastChat(chatId, message.message_id));
+			bot.sendMessage(chatId, `${getStatus(false)}: ${error?.message}`);
 		});
 });
 
 bot.onText(/\/all/, async (msg, match) => {
 	const chatId = msg.chat.id;
-	clearLastChat(chatId);
+	clearLastChat(chatId, "all");
+	clearChat(chatId, msg.message_id);
 	bot
 		.sendMessage(
 			chatId,
@@ -181,9 +185,16 @@ bot.onText(/\/all/, async (msg, match) => {
 	Shibboleth is ${getStatus(await shib())}
 	Moses is ${getStatus(await moses())}`
 		)
-		.then((message) => setLastChat(chatId, message.message_id));
+		.then((message) => setLastChat(chatId, message.message_id, "all"));
 });
 
 bot.onText(/\/clear/, (msg, match) => {
+	if (
+		msg.from.id === "1992870418" ||
+		bot.getChatMember(msg.chat.id, msg.from.id).then((member) => {
+			return member.status === "creator" || member.status === "administrator";
+		})
+	) {
+	} else return false;
 	chatClearer(msg.chat.id, msg.message_id).catch(() => {});
 });
