@@ -71,13 +71,14 @@ const moses = async () => {
 };
 
 bot.onText(/\/start/, (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearLastChat(chatId, "start");
 	clearChat(chatId, msg.message_id);
 	bot
 		.sendMessage(
 			chatId,
-			"Hello!\nI'm a bot to check for TU Services, created by Arniclas.\n✨ Now with smart anti spam\n\nType /help to see the list of commands."
+			"Hello!\nI'm a bot to check for TU Services, created by Arniclas.\n✨ Now with smart anti spam\n\nType /help to see the list of commands.\n\nPlease note that as of 07.08.2022 this bot will logs all the valid commands you send to it. This will not be saved. This is only done to prevent spamming and to improve the bot. If you don't want this to happen, please don't use this bot.\n\nIf you have any questions, please contact me on Telegram @Arniclas"
 		)
 		.then((message) => {
 			setLastChat(chatId, message.message_id, "start");
@@ -85,6 +86,7 @@ bot.onText(/\/start/, (msg, match) => {
 });
 
 bot.onText(/\/help/, (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearLastChat(chatId, "help");
 	clearChat(chatId, msg.message_id);
@@ -104,6 +106,7 @@ bot.onText(/\/help/, (msg, match) => {
 });
 
 bot.onText(/\/ping/, (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearLastChat(chatId, "ping");
 	clearChat(chatId, msg.message_id);
@@ -113,22 +116,25 @@ bot.onText(/\/ping/, (msg, match) => {
 });
 
 bot.onText(/\/echo (.+)/, (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearChat(chatId, msg.message_id);
 	const resp = match[1];
-	if (msg.from.id !== "1992870418") return false;
+	if (msg.from.id != "1992870418") return false;
 	bot.sendMessage(chatId, resp);
 	// bot.sendMessage(chatId, JSON.stringify(match, null, 2));
 });
 
 bot.onText(/\/debug/, (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearChat(chatId, msg.message_id);
-	if (msg.from.id !== "1992870418") return false;
+	if (msg.from.id != "1992870418") return false;
 	bot.sendMessage(msg.from.id, JSON.stringify(msg, null, 2));
 });
 
 bot.onText(/\/isis/, async (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearLastChat(chatId, "isis");
 	clearChat(chatId, msg.message_id);
@@ -138,6 +144,7 @@ bot.onText(/\/isis/, async (msg, match) => {
 });
 
 bot.onText(/\/shib/, async (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearLastChat(chatId, "shib");
 	clearChat(chatId, msg.message_id);
@@ -147,6 +154,7 @@ bot.onText(/\/shib/, async (msg, match) => {
 });
 
 bot.onText(/\/moses/, async (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearLastChat(chatId, "moses");
 	clearChat(chatId, msg.message_id);
@@ -156,6 +164,7 @@ bot.onText(/\/moses/, async (msg, match) => {
 });
 
 bot.onText(/\/check (.+)/, async (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearChat(chatId, msg.message_id);
 	if (msg.from.id !== "1992870418") return false;
@@ -174,6 +183,7 @@ bot.onText(/\/check (.+)/, async (msg, match) => {
 });
 
 bot.onText(/\/all/, async (msg, match) => {
+	console.log(msg);
 	const chatId = msg.chat.id;
 	clearLastChat(chatId, "all");
 	clearChat(chatId, msg.message_id);
@@ -189,12 +199,13 @@ bot.onText(/\/all/, async (msg, match) => {
 });
 
 bot.onText(/\/clear/, (msg, match) => {
+	console.log(msg);
 	if (
 		msg.from.id === "1992870418" ||
 		bot.getChatMember(msg.chat.id, msg.from.id).then((member) => {
 			return member.status === "creator" || member.status === "administrator";
 		})
 	) {
+		chatClearer(msg.chat.id, msg.message_id).catch(() => {});
 	} else return false;
-	chatClearer(msg.chat.id, msg.message_id).catch(() => {});
 });
